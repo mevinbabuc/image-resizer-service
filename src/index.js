@@ -29,13 +29,11 @@ exports.handler = (event) => new Promise((resolve, reject) => {
     }
 
     /*
-    Premagic use case
-    Show the original image, if the size is greater than 1600px res.
+        Premagic use case
+        Min image width is 1024px
     */
-    if (width > 2048) {
-         return original(imageBucket, objectKey)
-            .then(resolve)
-            .catch(reject);
+    if (width < 1024) {
+        width = 1024
     }
 
     return resize(imageBucket, objectKey, width, height)
