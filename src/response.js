@@ -3,7 +3,8 @@ const sendResponse = (body, contentType, statusCode, errorMessage) => {
         statusCode: statusCode,
         headers: {
             "Content-Type": contentType,
-            "X-Error": errorMessage || null
+            "X-Error": errorMessage || null,
+            "Cache-Control": `private, max-age=${60*60*24*90}`
         },
         body: body,
         isBase64Encoded: true
