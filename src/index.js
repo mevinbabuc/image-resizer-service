@@ -32,7 +32,7 @@ exports.handler = (event) => new Promise((resolve, reject) => {
     Premagic use case
     Show the original image, if the size is greater than 1600px res.
     */
-    if (width > 1600) {
+    if (width > 2048) {
          return original(imageBucket, objectKey)
             .then(resolve)
             .catch(reject);

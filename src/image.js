@@ -58,7 +58,25 @@ exports.resize = (imageBucket, objectKey, width, height) => new Promise((resolve
                 width: width,
                 srcData: data.Body,
                 dstPath: resizedFile,
-                quality: 0.95
+                quality: 0.82,
+                filter: 'Triangle',
+                colorspace: 'sRGB',
+                progressive: true,
+                strip: true,
+                customArgs: [
+                    '-define',
+                    'filter:support=2',
+                    '-thumbnail',
+                    width,
+                    // '-unsharp',
+                    // '0.25x0.25+8+0.065',
+                    '-dither',
+                    'None',
+                    // '-posterize',
+                    // '136',
+                    '-define',
+                    'jpeg:fancy-upsampling=off',
+                ]
             }, (err, output) => resizeCallback(err, output, resolve, reject));
         }
     }));
