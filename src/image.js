@@ -4,14 +4,17 @@ const im = require('imagemagick');
 const fs = require('fs');
 const os = require('os');
 
-const getFile = (imageBucket, objectKey, reject) => s3.getFileFromBucket(imageBucket, objectKey).catch(err => reject(errorResponse(err.code, 404, err)));
+const getFile = (imageBucket, objectKey, reject) => s3.getFileFromBucket(imageBucket, objectKey).catch(err => {
+    console.log(`ERROR: GetFile is erroring out for ${imageBucket} ${objectKey}`)
+    return reject(errorResponse(err.code, 404, err))
+});
 
 
 exports.original = (imageBucket, objectKey) => new Promise((resolve, reject) =>
 
     getFile(imageBucket, objectKey, reject).then(data => resolve(successResponse(data.Body.toString('base64'), 'image/jpeg'))));
 
-exports.resize = (imageBucket, objectKey, width, height) => new Promise((resolve, reject) =>
+exports.resize = (imageBucket, objectKey, width, height, quality) => new Promise((resolve, reject) =>
 
     getFile(imageBucket, objectKey, reject).then(data => {
 
@@ -24,7 +27,7 @@ exports.resize = (imageBucket, objectKey, width, height) => new Promise((resolve
             } else {
                 console.log('INFO: Resize operation completed successfully');
                 im.identify(resizedFile, (err, result) => {
-                    console.log('INFO: MIME type of thumbnail is being identified');
+                    console.log('INFO: MIME type of thumbnail is being identified ' + objectKey);
                     let mimeType;
                     switch (result.format) {
                         case 'GIF':
@@ -38,7 +41,9 @@ exports.resize = (imageBucket, objectKey, width, height) => new Promise((resolve
                     }
 
                     const response = successResponse(Buffer.from(fs.readFileSync(resizedFile)).toString('base64'), mimeType);
+                    console.log('INFO: success response ' + objectKey);
                     fs.unlink(resizedFile, () => console.log("INFO: Resized file cleaned up"));
+                    console.log('INFO: Deleted the file ' + objectKey);
                     resolve(response);
                 });
             }
@@ -58,7 +63,7 @@ exports.resize = (imageBucket, objectKey, width, height) => new Promise((resolve
                 width: width,
                 srcData: data.Body,
                 dstPath: resizedFile,
-                quality: 0.82,
+                quality: quality,
                 filter: 'Triangle',
                 colorspace: 'sRGB',
                 progressive: true,

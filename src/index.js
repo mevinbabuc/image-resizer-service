@@ -1,18 +1,15 @@
 const url = require('url');
 const {errorResponse} = require("./response");
-const {original, resize} = require("./image");
+const {original, resize, thumStrip} = require("./image");
 
 exports.handler = (event) => new Promise((resolve, reject) => {
     const imageBucket = process.env.IMAGE_BUCKET;
-
     if (!imageBucket) {
         return reject(`Error: Set environment variable IMAGE_BUCKET`);
     }
 
     const path = event.path;
     const objectKey = url.parse(path).pathname.replace(/^\/+/g, '');
-    console.log('INFO: key: ' + objectKey);
-
     const queryParameters = event.queryStringParameters || {};
 
     if (!queryParameters.width && !queryParameters.height) {
@@ -23,20 +20,40 @@ exports.handler = (event) => new Promise((resolve, reject) => {
 
     let width = parseInt(queryParameters.width);
     const height = parseInt(queryParameters.height);
-
-    if ((queryParameters.width && isNaN(width)) || (queryParameters.height && isNaN(height))) {
-        return reject(errorResponse(`width and height parameters must be integer`, 400));
+    if (isNaN(width)) {
+        return reject(errorResponse(`width parameters must be integer`, 400));
     }
 
-    /*
-        Premagic use case
-        Min image width is 1024px
-    */
-    if (width < 1024) {
-        width = 1024
+    // Type based upper limit
+    const limits = {
+        'selection': 1200,
+        'highlight': 4000,
+        'thumbnail': 300,
+        'dynthumbnail': 1200,
+        'videostrip': 9000
+    };
+
+    const type = queryParameters.type || 'highlight'; // thumbnail / selection / highlight / dynthumbnail ?
+    const upperLimit = limits[type];
+
+    if (type === 'videostrip') {
+        return thumStrip(imageBucket, objectKey, width)
+            .then(resolve)
+            .catch(reject);
     }
 
-    return resize(imageBucket, objectKey, width, height)
-        .then(resolve)
-        .catch(reject);
+    // Lets never ever upscale images; unless we use neural networks
+    const standardSizes = ['selection', 'highlight', 'thumbnail'];
+    const standardThumbnailSizes = ['thumbnail', 'dynthumbnail'];
+    if (standardSizes.indexOf(type) > -1 && width >= upperLimit) {
+        return original(imageBucket, objectKey)
+            .then(resolve)
+            .catch(reject);
+    } else {
+        width = width >= upperLimit ? upperLimit : width;
+        const quality = standardThumbnailSizes.indexOf(type) > -1 ? 0.82: 0.95;
+        return resize(imageBucket, objectKey, width, height, quality)
+            .then(resolve)
+            .catch(reject);
+    }
 });

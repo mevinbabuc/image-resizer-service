@@ -19,7 +19,7 @@ const onePixelGif = Buffer.from([
     0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44, 0x01, 0x00, 0x3b
 ]).toString('base64');
 
-exports.errorResponse = (body, statusCode, err) => {
-    console.log(`ERROR ${statusCode} ${body}`, err);
-    return sendResponse(onePixelGif, 'image/gif', statusCode, body);
+exports.errorResponse = (errorMessage, statusCode, err) => {
+    console.log(`ERROR ${statusCode} ${errorMessage}`, err);
+    return sendResponse(onePixelGif, 'image/gif', statusCode, errorMessage);
 };
