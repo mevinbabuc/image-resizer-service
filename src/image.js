@@ -23,6 +23,7 @@ exports.resize = (imageBucket, objectKey, width, height, quality) => new Promise
 
         const resizeCallback = (err, output, resolve, reject) => {
             if (err) {
+                console.log(`Error: Resize callback ${objectKey}`);
                 reject(errorResponse(null, 500, err));
             } else {
                 console.log('INFO: Resize operation completed successfully');
@@ -73,14 +74,22 @@ exports.resize = (imageBucket, objectKey, width, height, quality) => new Promise
                     'filter:support=2',
                     '-thumbnail',
                     width,
-                    // '-unsharp',
-                    // '0.25x0.25+8+0.065',
+                    '-unsharp',
+                    '0.25x0.08+8.3+0.045',
                     '-dither',
                     'None',
-                    // '-posterize',
-                    // '136',
+                    '-posterize',
+                    '136',
                     '-define',
                     'jpeg:fancy-upsampling=off',
+                    '-define',
+                    'png:compression-filter=5',
+                    '-define',
+                    'png:compression-level=9',
+                    '-define',
+                    'png:compression-strategy=1',
+                    '-define',
+                    'png:exclude-chunk=all'
                 ]
             }, (err, output) => resizeCallback(err, output, resolve, reject));
         }
