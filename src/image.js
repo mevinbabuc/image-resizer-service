@@ -14,9 +14,42 @@ exports.original = (imageBucket, objectKey) => new Promise((resolve, reject) =>
 
     getFile(imageBucket, objectKey, reject).then(data => resolve(successResponse(data.Body.toString('base64'), 'image/jpeg'))));
 
-exports.resize = (imageBucket, objectKey, width, height, quality) => new Promise((resolve, reject) =>
+exports.resize = (imageBucket, objectKey, width, height, quality, gravity, filter, custom) => new Promise((resolve, reject) =>
 
     getFile(imageBucket, objectKey, reject).then(data => {
+        const customArgs = [
+                    '-define',
+                    'filter:support=2',
+                    '-thumbnail',
+                    width,
+                    // '-unsharp',
+                    // '0.25x0.08+8.3+0.045',
+                    '-dither',
+                    'None',
+                    // '-posterize',
+                    // '136',
+                    '-define',
+                    'jpeg:fancy-upsampling=off',
+                    '-sampling-factor',
+                    '4:2:0',
+                    // '-define',
+                    // 'png:compression-filter=5',
+                    // '-define',
+                    // 'png:compression-level=9',
+                    // '-define',
+                    // 'png:compression-strategy=1',
+                    // '-define',
+                    // 'png:exclude-chunk=all',
+                ];
+        if (custom) {
+            const __dynArgs = custom.split('_');
+            for(i in __dynArgs){
+                const foo=__dynArgs[i].split('---');
+                customArgs.push(foo[0]);
+                customArgs.push(foo[1]);
+            }
+
+        }
 
         const normalizeObjectKey = objectKey.split('/').join('.');
         const resizedFile = `${os.tmpDir}/resized.${imageBucket}.${normalizeObjectKey}.${width}.${height}`;
@@ -56,41 +89,23 @@ exports.resize = (imageBucket, objectKey, width, height, quality) => new Promise
                 srcData: data.Body,
                 dstPath: resizedFile,
                 height: height,
-                quality: 1,
-                gravity: "Center"
+                quality: quality,
+                gravity: gravity
             }, (err, output) => resizeCallback(err, output, resolve, reject));
         } else {
+
+            console.warn("Dynamic filters args", JSON.stringify((customArgs)));
+
             im.resize({
                 width: width,
                 srcData: data.Body,
                 dstPath: resizedFile,
                 quality: quality,
-                filter: 'Triangle',
+                filter: filter,
                 colorspace: 'sRGB',
                 progressive: true,
                 strip: true,
-                customArgs: [
-                    '-define',
-                    'filter:support=2',
-                    '-thumbnail',
-                    width,
-                    '-unsharp',
-                    '0.25x0.08+8.3+0.045',
-                    '-dither',
-                    'None',
-                    '-posterize',
-                    '136',
-                    '-define',
-                    'jpeg:fancy-upsampling=off',
-                    '-define',
-                    'png:compression-filter=5',
-                    '-define',
-                    'png:compression-level=9',
-                    '-define',
-                    'png:compression-strategy=1',
-                    '-define',
-                    'png:exclude-chunk=all'
-                ]
+                customArgs: customArgs
             }, (err, output) => resizeCallback(err, output, resolve, reject));
         }
     }));

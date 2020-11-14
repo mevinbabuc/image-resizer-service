@@ -20,6 +20,20 @@ exports.handler = (event) => new Promise((resolve, reject) => {
 
     let width = parseInt(queryParameters.width);
     const height = parseInt(queryParameters.height);
+    let gravity = queryParameters.gravity || 'Center';
+
+    let quality = parseInt(queryParameters.quality);
+
+    let __dynArgs = queryParameters.custom || '';
+
+    // 'Lanczos' used to be old value
+    let filter = queryParameters.filter || 'Triangle';
+
+    const validGravityValues = ['NorthWest', 'North', 'NorthEast', 'West', 'Center', 'East', 'SouthWest', 'South', 'SouthEast'];
+    if (validGravityValues.indexOf(gravity) < 0){
+        gravity = 'Center';
+    }
+
     if (isNaN(width)) {
         return reject(errorResponse(`width parameters must be integer`, 400));
     }
@@ -29,7 +43,7 @@ exports.handler = (event) => new Promise((resolve, reject) => {
         'selection': 1200,
         'highlight': 4000,
         'thumbnail': 300,
-        'dynthumbnail': 1200,
+        'dynthumbnail': 800,
         'videostrip': 9000
     };
 
@@ -51,8 +65,19 @@ exports.handler = (event) => new Promise((resolve, reject) => {
             .catch(reject);
     } else {
         width = width >= upperLimit ? upperLimit : width;
-        const quality = standardThumbnailSizes.indexOf(type) > -1 ? 0.82: 0.95;
-        return resize(imageBucket, objectKey, width, height, quality)
+
+        if (isNaN(quality)) {
+            quality = standardThumbnailSizes.indexOf(type) > -1 ? 75: 82;
+        }
+
+        if (type === 'dynthumbnail') {
+            quality = 45;
+            filter = 'Lanczos';
+            width = width + 200;
+        }
+
+        quality = quality/100;
+        return resize(imageBucket, objectKey, width, height, quality, gravity, filter, __dynArgs)
             .then(resolve)
             .catch(reject);
     }
