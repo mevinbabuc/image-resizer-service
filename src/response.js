@@ -4,7 +4,10 @@ const sendResponse = (body, contentType, statusCode, errorMessage) => {
         headers: {
             "Content-Type": contentType,
             "X-Error": errorMessage || null,
-            "Cache-Control": `private, max-age=${60*60*24*90}`
+            "Cache-Control": `private, max-age=${60*60*24*90}`,
+            "Access-Control-Allow-Headers" : "Content-Type",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS"
         },
         body: body,
         isBase64Encoded: true
