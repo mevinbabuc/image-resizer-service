@@ -19,7 +19,7 @@
     "jest": "^23.5.0",
     "json-loader": "^0.5.7",
     "webpack": "^4.17.2",
-    "webpack-cli": "^2.1.5",
+    "webpack-cli": "^6.0.1",
     "webpack-zip-files-plugin": "^1.0.0"
   },
   "dependencies": {
